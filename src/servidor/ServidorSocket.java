@@ -64,54 +64,66 @@ public class ServidorSocket extends Thread {
             BufferedReader msgRecebida = new BufferedReader(new InputStreamReader(this.conexao.getInputStream()));
             PrintStream msgEnviada = new PrintStream(this.conexao.getOutputStream());
 
-            this.nomeCliente = msgRecebida.readLine();
+            this.nomeCliente = msgRecebida.readLine().trim();
+
+            /* Sem nome de cliente, não aceita conexão */
+            if (this.nomeCliente.length() == 0) {
+                msgEnviada.println("Necessário nome de usuário. Informe um, e conecte novamente.");
+                this.conexao.close();
+                return;
+            }
 
             if (adiciona(this.nomeCliente)) {
                 msgEnviada.println("Já existe um usuário conectado com esse nome. Informe outro, e conecte novamente.");
                 this.conexao.close();
                 return;
             } else {
-                //mostra o nome do cliente conectado ao servidor
                 System.out.println(this.nomeCliente + " : Conectado ao Servidor!");
-                //Quando o cliente se conectar recebe todos que estão conectados
                 msgEnviada.println("Conectados: " + LISTA_DE_NOMES.toString());
             }
-            if (this.nomeCliente == null) {
-                return;
-            }
-            //adiciona os dados de saida do cliente no objeto MAP_CLIENTES
-            //A chave será o nome e valor o printstream
+
+            /* Adiciona o nome do Usuario à string que será enviada */
             MAP_CLIENTES.put(this.nomeCliente, msgEnviada);
+
             String[] msg = msgRecebida.readLine().split(":");
+
             while (msg != null && !(msg[0].trim().equals(""))) {
-                send(msgEnviada, " escreveu: ", msg);
+                enviar(msgEnviada, " escreveu: ", msg);
                 msg = msgRecebida.readLine().split(":");
             }
+
             System.out.println(this.nomeCliente + " saiu do bate-papo!");
+
             String[] out = {" do bate-papo!"};
-            send(msgEnviada, " saiu", out);
+            enviar(msgEnviada, " saiu", out);
+
             remove(this.nomeCliente);
+
             MAP_CLIENTES.remove(this.nomeCliente);
             this.conexao.close();
+
         } catch (IOException e) {
             System.out.println("Falha na Conexao... .. ." + " IOException: " + e);
         }
     }
 
     /**
-     * Se o array da msg tiver tamanho igual a 1, então envia para todos
-     * Se o tamanho for 2, envia apenas para o cliente escolhido
+     * Envia mensagem recebida.
+     * @param saida
+     * @param acao
+     * @param msg
      */
-    public void send(PrintStream saida, String acao, String[] msg) {
+    public void enviar(PrintStream saida, String acao, String[] msg) {
         out:
         for (Map.Entry<String, PrintStream> cliente : MAP_CLIENTES.entrySet()) {
             PrintStream chat = cliente.getValue();
+
             if (chat != saida) {
                 if (msg.length == 1) {
                     chat.println(this.nomeCliente + acao + msg[0]);
                 } else {
-                    if (msg[1].equalsIgnoreCase(cliente.getKey())) {
-                        chat.println(this.nomeCliente + acao + msg[0]);
+                    if (msg[0].equalsIgnoreCase(cliente.getKey())) {
+                        chat.println(this.nomeCliente + acao + msg[1]);
                         break out;
                     }
                 }
