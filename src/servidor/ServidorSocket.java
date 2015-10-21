@@ -43,13 +43,14 @@ public class ServidorSocket extends Thread {
         }
     }
 
+    /* Método Principal */
     public static void main(String args[]) {
         MAP_CLIENTES = new HashMap<String, PrintStream>();
         try {
-            ServerSocket server = new ServerSocket(5555);
-            System.out.println("ServidorSocket rodando na porta 5555");
+            ServerSocket servidor = new ServerSocket(5555);
+            System.out.println("Servidor rodando na porta 5555");
             while (true) {
-                Socket conexao = server.accept();
+                Socket conexao = servidor.accept();
                 Thread t = new ServidorSocket(conexao);
                 t.start();
             }
@@ -60,33 +61,35 @@ public class ServidorSocket extends Thread {
 
     public void run() {
         try {
-            BufferedReader inMsg = new BufferedReader(new InputStreamReader(this.conexao.getInputStream()));
-            PrintStream outMsg = new PrintStream(this.conexao.getOutputStream());
-            this.nomeCliente = inMsg.readLine();
+            BufferedReader msgRecebida = new BufferedReader(new InputStreamReader(this.conexao.getInputStream()));
+            PrintStream msgEnviada = new PrintStream(this.conexao.getOutputStream());
+
+            this.nomeCliente = msgRecebida.readLine();
+
             if (adiciona(this.nomeCliente)) {
-                outMsg.println("Já existe um usuário conectado com esse nome. Informe outro, e conecte novamente.");
+                msgEnviada.println("Já existe um usuário conectado com esse nome. Informe outro, e conecte novamente.");
                 this.conexao.close();
                 return;
             } else {
                 //mostra o nome do cliente conectado ao servidor
                 System.out.println(this.nomeCliente + " : Conectado ao Servidor!");
                 //Quando o cliente se conectar recebe todos que estão conectados
-                outMsg.println("Conectados: " + LISTA_DE_NOMES.toString());
+                msgEnviada.println("Conectados: " + LISTA_DE_NOMES.toString());
             }
             if (this.nomeCliente == null) {
                 return;
             }
             //adiciona os dados de saida do cliente no objeto MAP_CLIENTES
             //A chave será o nome e valor o printstream
-            MAP_CLIENTES.put(this.nomeCliente, outMsg);
-            String[] msg = inMsg.readLine().split(":");
+            MAP_CLIENTES.put(this.nomeCliente, msgEnviada);
+            String[] msg = msgRecebida.readLine().split(":");
             while (msg != null && !(msg[0].trim().equals(""))) {
-                send(outMsg, " escreveu: ", msg);
-                msg = inMsg.readLine().split(":");
+                send(msgEnviada, " escreveu: ", msg);
+                msg = msgRecebida.readLine().split(":");
             }
             System.out.println(this.nomeCliente + " saiu do bate-papo!");
             String[] out = {" do bate-papo!"};
-            send(outMsg, " saiu", out);
+            send(msgEnviada, " saiu", out);
             remove(this.nomeCliente);
             MAP_CLIENTES.remove(this.nomeCliente);
             this.conexao.close();
