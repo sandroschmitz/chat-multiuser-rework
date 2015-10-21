@@ -10,7 +10,6 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.net.Socket;
@@ -83,7 +82,7 @@ public class ClienteSocket extends JFrame implements ActionListener {
             //envia o nome digitado para o servidor
             saida.println(meuNome.toUpperCase());
             //instancia a thread para ip e porta conectados e depois inicia ela
-            Recebedor r = new Recebedor(socket.getInputStream());
+            Recebedor r = new Recebedor(this, socket.getInputStream());
             new Thread(r).start();
         } catch (IOException e) {
             System.out.println("Falha na Conexao... .. ." + " IOException: " + e);
@@ -121,38 +120,6 @@ public class ClienteSocket extends JFrame implements ActionListener {
         } catch (IOException e) {
             // caso ocorra alguma exceção de E/S, mostra qual foi.
             System.out.println("Ocorreu uma Falha... .. ." + " IOException: " + e);
-        }
-    }
-
-    class Recebedor implements Runnable {
-
-        private InputStream servidor;
-
-        public Recebedor(InputStream servidor) {
-            this.servidor = servidor;
-        }
-
-        @Override
-        public void run() {
-            try {
-                //recebe mensagens de outro cliente através do servidor
-                entrada = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                //cria variavel de mensagem
-                String msg;
-                while (true) {
-                    // pega o que o servidor enviou
-                    msg = entrada.readLine();
-                    //se a mensagem contiver dados, passa pelo if, caso contrario cai no break e encerra a conexao
-                    if (msg == null) {
-                        System.out.println("Conexão encerrada!");
-                        System.exit(0);
-                    }
-                    areaTexto.append(msg + "\n");
-                }
-            } catch (IOException e) {
-                // caso ocorra alguma exceção de E/S, mostra qual foi.
-                System.out.println("Ocorreu uma Falha... .. ." + " IOException: " + e);
-            }
         }
     }
 
